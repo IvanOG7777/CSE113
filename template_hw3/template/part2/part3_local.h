@@ -32,6 +32,16 @@ void launch_threads(float* result_parallel, int* mult) {
 
   std:: vector<std:: thread> threads(NUM_THREADS);
 
+  // launch threads for enqing
+  for (int i = 0; i < threads.size(); i++) {
+    threads[i] = std::thread(parallel_enq, SIZE, i, NUM_THREADS);
+  }
+
+  for (int i = 0; i < threads.size(); i++) {
+    threads[i].join();
+  }
+
+  // launch threads for multiplying
   for (int i = 0; i < threads.size(); i++) {
     threads[i] = std::thread(parallel_mult, result_parallel, mult, SIZE, i, NUM_THREADS);
   }
