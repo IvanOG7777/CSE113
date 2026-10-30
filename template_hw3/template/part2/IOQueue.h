@@ -54,11 +54,17 @@ public:
   // return -1 if there is no more values
   // from the queue.
   int deq() {
-    int current_head = head.load(); // grab the latest head
 
-    if (current_head >= head.load()) return -1; // check if it's greater than or equal to tail. Return if true
+    while (true) {
+      int current_head = head.load(); // load in current fetched head
 
-    while ()
+      if (current_head >= tail.load()) return -1; // if true return 1 (nno more elements)
+
+      // if head.load() is equal to current head, swap head with current_head + 1 annd enter
+      if (head.compare_exchange_weak(current_head,current_head + 1)) {
+        return buffer[current_head % buffer_size]; // return buffer value
+      }
+    }
   }
 
   // return 32 values from the queue. The

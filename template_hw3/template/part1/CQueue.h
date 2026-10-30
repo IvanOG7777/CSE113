@@ -1,5 +1,4 @@
 #include <atomic>
-#include <stdio.h>
 
 #define CQUEUE_SIZE 2048
 
@@ -29,8 +28,9 @@ private:
     // load element into buffer
     buffer[index] = e;
 
-    // add 1 to tail
-    tail.fetch_add(1);
+    // add 1 to tail and load
+    int new_tail = tail.load() + 1;
+    tail.store(new_tail);
   }
 
   float deq() {
@@ -43,7 +43,9 @@ private:
 
     float value = buffer[index]; // get the value
 
-    head.fetch_add(1); // add one to head
+    // add 1 to head and store
+    int new_head = head.load() + 1;
+    head.store(new_head);
 
     return value; // return value
   }
@@ -54,7 +56,7 @@ private:
 
   void enq_8(float e[8]) {
 
-    while ((CQUEUE_SIZE - (tail.load() - head.load()) < 8)) {}; // wait while has less than 8 slots available
+    while (CQUEUE_SIZE - (tail.load() - head.load()) < 8) {}; // wait while has less than 8 slots available
 
     int buffer_index = tail.load() % CQUEUE_SIZE; // calculate where to place items at in buffer
 
@@ -65,7 +67,9 @@ private:
       buffer[buffer_index++] = e[i]; // place item
     }
 
-    tail.fetch_add(8);
+    int new_tail = tail.load() + 8;
+
+    tail.store(new_tail);
   }
 
   void deq_8(float e[8]) {
@@ -81,6 +85,8 @@ private:
       e[i] = buffer[buffer_index++]; // load buffer_index++ to e[i]
     }
 
-    head.fetch_add(8); // add 8 to head index
+    // load old head and att 8 to it for new index and store
+    int new_head = head.load() + 8;
+    head.store(new_head);
   }
 };

@@ -1,6 +1,10 @@
+#include "util.h"
 ScheduleType t = local_t;
 
 #include <atomic>
+#include <vector>
+#include <thread>
+
 #include "IOQueue.h"
 
 IOQueue Q[NUM_THREADS];
@@ -25,4 +29,14 @@ void launch_threads(float* result_parallel, int* mult) {
 
   // Next, launch the parallel function that performs the parallel_mult
   // function from part1_static.h and part2_global.h but using workstealing
+
+  std:: vector<std:: thread> threads(NUM_THREADS);
+
+  for (int i = 0; i < threads.size(); i++) {
+    threads[i] = std::thread(parallel_mult, result_parallel, mult, SIZE, i, NUM_THREADS);
+  }
+
+  for (int i = 0; i < threads.size(); i++) {
+    threads[i].join();
+  }
 }
