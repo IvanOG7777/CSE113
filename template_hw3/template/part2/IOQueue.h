@@ -1,25 +1,64 @@
+#pragma once
 #include <atomic>
 
 class IOQueue {
- public:
+private:
+  std:: atomic<int> head;
+  std:: atomic<int> tail;
+  int *buffer;
+  int buffer_size;
+
+public:
   IOQueue() {
+    head.store(0);
+    tail.store(0);
+    buffer = nullptr;
+    buffer_size = 0;
+  }
+
+  ~IOQueue() {
+    delete[] buffer;
   }
 
 
   // Use this function to initialize the queue to
   // the size that you need.
   void init(int size) {
+    // if buffer hasn't been initialized
+    if (buffer == nullptr) {
+      buffer = new int[size];
+      buffer_size = size;
+    } else {
+      // delete old buffer allocate new space and reset head/tail
+      delete[] buffer;
+      buffer = new int[size];
+      buffer_size = size;
+      head.store(0);
+      tail.store(0);
+    }
   }
 
   // enqueue the element e into the queue
   void enq(int e) {
+
+    if (tail.load() >= buffer_size) return; // check if tail is greater than or equal to buffer size
+
+    int buffer_index = tail.load() % buffer_size; // calculate index
+
+    buffer[buffer_index] = e; // input element at calculated index
+
+    tail.fetch_add(1); // atomically fetch and add
   }
 
   // return a value from the queue.
   // return -1 if there is no more values
   // from the queue.
   int deq() {
-    return -1;
+    int current_head = head.load(); // grab the latest head
+
+    if (current_head >= head.load()) return -1; // check if it's greater than or equal to tail. Return if true
+
+    while ()
   }
 
   // return 32 values from the queue. The
@@ -31,6 +70,4 @@ class IOQueue {
     return -1;
   }
 
- private:
-  // Give me some private variables
 };
