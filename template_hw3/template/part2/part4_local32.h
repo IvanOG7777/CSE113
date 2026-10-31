@@ -33,24 +33,30 @@ void parallel_mult(float * result, int *mult, int size, int tid, int num_threads
   // Unlike in part3_local.h, you should deq 32 elements
   // at a time.
 
+  // similar to part3 working on myself
   while (true) {
+    // create 32 int array per loop
     int return_array[32] = {0};
 
+    // get the return value from deq_32
     int ok = Q[tid].deq_32(return_array);
-    if (ok == -1) break;
+    if (ok == -1) break; // end loop if -1
 
     for (int i = 0; i < 32; i++) {
-      float base = result[return_array[i]];
+      float base = result[return_array[i]]; // get base at returned array index
 
+      // do the multiplication on that array
       for (int j = 0; j < mult[return_array[i]]-1; j++) {
         result[return_array[i]] = result[return_array[i]] + base;
       }
     }
   }
 
+  // Work on other threads when done
   for (int i = 0; i < num_threads; i++) {
-    if (i == tid) continue;
+    if (i == tid) continue; // skip myself
 
+    // Same process as on myself but on other threads queues.
     while (true) {
       int return_array[32] = {0};
 
