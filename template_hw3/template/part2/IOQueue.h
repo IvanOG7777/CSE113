@@ -71,8 +71,25 @@ public:
   // the array passed in.
   // return 0 if successful. return 1 if not
   // i.e. if the queue does not have 32 elements
+
+  // same as deq() only loading in 32 values first
   int deq_32(int ret[32]) {
-    return -1;
+
+    // keep checking
+    while (true) {
+      int current_head = head.load(); // grab current heads
+
+      // if current elements is less than the 32 we need return error
+      if (tail.load() - current_head < 32) return -1;
+
+      // if head and current head match enter and move head up 32 spots
+      if (head.compare_exchange_weak(current_head, current_head + 32)) {
+        for (int i = 0; i < 32; i++) {
+          ret[i] = buffer[current_head++ % buffer_size]; // load values from buffer at current_head++ to return array
+        }
+        return 0; // return success
+      }
+    }
   }
 
 };
