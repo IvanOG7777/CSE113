@@ -1,4 +1,3 @@
-#include "util.h"
 ScheduleType t = local_t;
 
 #include <atomic>
@@ -45,9 +44,23 @@ void parallel_mult(float * result, int *mult, int size, int tid, int num_threads
     }
   }
 
+  // Work stealing loop
+  // Go through other threads queues
+  for (int i = 0; i < num_threads; i++) {
+    if (i == tid) continue; // skip myself
 
+    // Do the same process on other threads like I did on me.
+    while (true) {
+      int return_value = Q[i].deq();
 
+      if (return_value == -1) break;
 
+      float base = result[return_value];
+      for (int i = 0; i < mult[return_value]-1; i++) {
+        result[return_value] = result[return_value] + base;
+      }
+    }
+  }
 }
 
 void launch_threads(float* result_parallel, int* mult) {
