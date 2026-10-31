@@ -51,8 +51,7 @@ public:
   }
 
   // return a value from the queue.
-  // return -1 if there is no more values
-  // from the queue.
+  // return -1 if there is no more values from the queue.
   int deq() {
 
     while (true) {
