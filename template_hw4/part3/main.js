@@ -9,7 +9,7 @@ import updateSpriteWGSL from './updateSprite.js';
 export const main = async() => {
     
     // Number of particles
-    const NUMPARTICLES = 1024;
+    const NUMPARTICLES = 20000;
     
     // Set up canvas and other devices
     const canvas = document.getElementById('canvas');

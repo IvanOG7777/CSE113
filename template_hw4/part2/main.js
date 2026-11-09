@@ -5,10 +5,10 @@
 
 function main() {
     // Number of particles
-    const NUMPARTICLES = 128;
+    const NUMPARTICLES = 4096;
 
     // Number of workers
-    const NUMWORKERS = 4;
+    const NUMWORKERS = 16;
     
     // Get canvas and context 
     const canvas = document.getElementById('canvas');
@@ -50,65 +50,81 @@ function main() {
     var totalFramePerSecond = 0;
     var frameCounter = 0;
 
-    // Initialize a worker
-    var worker = new Worker('./webWorker.js');
+    // Initialize a workers
+    const thread_chunk = NUMPARTICLES / NUMWORKERS;
+    var workers = [];
+    for (let i = 0; i < NUMWORKERS; i++) {
+        workers.push(new Worker('./webWorker.js'));
+    }
 
     // Update Particles
     function frame() {
 
-        // Gather all data together that will get send over to worker
-        var transferData = {
-            NUMPARTICLES: NUMPARTICLES,
-            particlesComputeBuffer: particlesComputeBuffer,
-            particlesRenderBuffer: particlesRenderBuffer
-        };
+        let finished_workers = 0;
 
-        // Send work to web worker
-        worker.postMessage(transferData);
-        
-        // Receive work done by web worker
-        worker.onmessage = function() {
+        // Send work to web worker at i
+        for (let i = 0; i < NUMWORKERS; i++) {
+            let start = i * thread_chunk;
+            let end = start + thread_chunk;
 
-            // Erase all particles
-            context.clearRect(0, 0, canvas.width, canvas.height);
+            // Gather all data together that will get send over to worker
 
-            // Draw canvas background
-            context.fillStyle = "black";
-            context.fillRect(0, 0, canvas.width, canvas.height);
+            let transferData = {
+                NUMPARTICLES: NUMPARTICLES,
+                start: start,
+                end: end,
+                particlesComputeBuffer: particlesComputeBuffer,
+                particlesRenderBuffer: particlesRenderBuffer,
+            };
 
-            // Draw particles with new data into canvas and
-	        // update particlesComputeData with particlesRenderData
-            for (let i = 0; i < NUMPARTICLES; i++) {
-                context.fillStyle = "white";
-                context.fillRect(particlesRenderData[2 * i], particlesRenderData[2 * i + 1], 3, 3);
-                particlesComputeData[2*i] = particlesRenderData[2*i];
-                particlesComputeData[2*i+1] = particlesRenderData[2*i+1];
-            }
+            // Receive work done by web worker
+            workers[i].onmessage = function() {
+                finished_workers++;
 
-            // Measure performance
-            currentTime = performance.now();
-            var elapsedTime = currentTime - previousTime;
-            previousTime = currentTime;
-            var framePerSecond = Math.round(1 / (elapsedTime / 1000));
-            totalFramePerSecond += framePerSecond;
-            frameCounter++;
+                if (finished_workers === NUMWORKERS) {
+                    // Erase all particles
+                    context.clearRect(0, 0, canvas.width, canvas.height);
 
-            if(updatePerformance) {
-                updatePerformance = false;
+                    // Draw canvas background
+                    context.fillStyle = "black";
+                    context.fillRect(0, 0, canvas.width, canvas.height);
 
-                let averageFramePerSecond = Math.round(totalFramePerSecond / frameCounter);
-                
-                frameCounter = 0;
-                totalFramePerSecond = 0;
+                    // Draw particles with new data into canvas and
+                    // update particlesComputeData with particlesRenderData
+                    for (let i = 0; i < NUMPARTICLES; i++) {
+                        context.fillStyle = "white";
+                        context.fillRect(particlesRenderData[2 * i], particlesRenderData[2 * i + 1], 3, 3);
+                        particlesComputeData[2*i] = particlesRenderData[2*i];
+                        particlesComputeData[2*i+1] = particlesRenderData[2*i+1];
+                    }
 
-                document.getElementById("fps").innerHTML = `FPS:  ${averageFramePerSecond}`;
+                    // Measure performance
+                    currentTime = performance.now();
+                    var elapsedTime = currentTime - previousTime;
+                    previousTime = currentTime;
+                    var framePerSecond = Math.round(1 / (elapsedTime / 1000));
+                    totalFramePerSecond += framePerSecond;
+                    frameCounter++;
 
-                // Update FPS every 100ms
-                setTimeout(() => {
-                    updatePerformance = true;
-                }, 100);
-            }
-            requestAnimationFrame(frame);
+                    if(updatePerformance) {
+                        updatePerformance = false;
+
+                        let averageFramePerSecond = Math.round(totalFramePerSecond / frameCounter);
+
+                        frameCounter = 0;
+                        totalFramePerSecond = 0;
+
+                        document.getElementById("fps").innerHTML = `FPS:  ${averageFramePerSecond}`;
+
+                        // Update FPS every 100ms
+                        setTimeout(() => {
+                            updatePerformance = true;
+                        }, 100);
+                    }
+                    requestAnimationFrame(frame);
+                }
+            };
+            workers[i].postMessage(transferData);
         }
     }
     requestAnimationFrame(frame);

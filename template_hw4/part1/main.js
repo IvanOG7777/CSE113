@@ -5,7 +5,7 @@
 
 function main() {
     // Number of particles
-    const NUMPARTICLES = 2048;
+    const NUMPARTICLES = 4096;
     
     // Get canvas and context 
     const canvas = document.getElementById('canvas');
