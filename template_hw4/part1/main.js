@@ -5,8 +5,8 @@
 
 function main() {
     // Number of particles
-    const NUMPARTICLES = 4096;
-    
+    const NUMPARTICLES = 8192;
+
     // Get canvas and context 
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext("2d");
@@ -46,6 +46,10 @@ function main() {
     currentTime = previousTime = performance.now();
     var totalFramePerSecond = 0;
     var frameCounter = 0;
+
+    // get the start time of run
+    let testStartTime = performance.now();
+    let testFrameCount = 0;
 
     // Initialize a worker
     var worker = new Worker('./webWorker.js');
@@ -89,6 +93,19 @@ function main() {
             var framePerSecond = Math.round(1 / (elapsedTime / 1000));
             totalFramePerSecond += framePerSecond;
             frameCounter++;
+
+            // Log average FPS every 60 seconds
+            testFrameCount++;
+            const testElapsedMs = currentTime - testStartTime;
+
+            if (testElapsedMs >= 60000) {
+                const averageFPS = testFrameCount * 1000 / testElapsedMs;
+
+                console.log(`Part 1 | ${NUMPARTICLES} particles | 60-second average FPS: ${averageFPS.toFixed(2)}`);
+
+                testStartTime = currentTime;
+                testFrameCount = 0;
+            }
 
             if(updatePerformance) {
                 updatePerformance = false;

@@ -5,7 +5,7 @@
 
 function main() {
     // Number of particles
-    const NUMPARTICLES = 4096;
+    const NUMPARTICLES = 16384;
 
     // Number of workers
     const NUMWORKERS = 16;
@@ -57,6 +57,10 @@ function main() {
         workers.push(new Worker('./webWorker.js'));
     }
 
+    // get the start time of run
+    let testStartTime = performance.now();
+    let testFrameCount = 0;
+
     // Update Particles
     function frame() {
 
@@ -105,6 +109,19 @@ function main() {
                     var framePerSecond = Math.round(1 / (elapsedTime / 1000));
                     totalFramePerSecond += framePerSecond;
                     frameCounter++;
+
+                    // Log average FPS every 60 seconds
+                    testFrameCount++;
+                    const testElapsedMs = currentTime - testStartTime;
+
+                    if (testElapsedMs >= 60000) {
+                        const averageFPS = testFrameCount * 1000 / testElapsedMs;
+
+                        console.log(`Part 2 | ${NUMPARTICLES} particles | 60-second average FPS: ${averageFPS.toFixed(2)}`);
+
+                        testStartTime = currentTime;
+                        testFrameCount = 0;
+                    }
 
                     if(updatePerformance) {
                         updatePerformance = false;

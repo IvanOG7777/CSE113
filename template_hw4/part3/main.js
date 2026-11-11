@@ -9,7 +9,7 @@ import updateSpriteWGSL from './updateSprite.js';
 export const main = async() => {
     
     // Number of particles
-    const NUMPARTICLES = 20000;
+    const NUMPARTICLES = 65536;
     
     // Set up canvas and other devices
     const canvas = document.getElementById('canvas');
@@ -125,6 +125,10 @@ export const main = async() => {
     var totalFramePerSecond = 0;
     var frameCounter = 0;
 
+    // get the start time of run
+    let testStartTime = performance.now();
+    let testFrameCount = 0;
+
     let t = 0;
     function frame() {
         const textureView = context.getCurrentTexture().createView();
@@ -169,6 +173,20 @@ export const main = async() => {
         var framePerSecond = Math.round(1 / (elapsedTime / 1000));
         totalFramePerSecond += framePerSecond;
         frameCounter++;
+
+        // Log the average FPS over 5 seconds
+        testFrameCount++;
+        const testElapsedMs = currentTime - testStartTime;
+
+        // time in MS
+        if (testElapsedMs >= 60000) {
+            const averageFPS = testFrameCount * 1000 / testElapsedMs;
+
+            console.log(`Part 3 | ${NUMPARTICLES} particles | 1 minute average FPS: ${averageFPS.toFixed(2)}`);
+
+            testStartTime = performance.now();
+            testFrameCount = 0;
+        }
             
         if(updatePerformance) {
             updatePerformance = false;
