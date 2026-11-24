@@ -1,5 +1,6 @@
 #include <atomic>
 #include <vector>
+#include <thread>
 
 class barrier_object {
 private:
@@ -28,9 +29,12 @@ private:
     // if current thread is the last thread
     if (count.fetch_sub(1) == 1) {
       count.store(total_threads); // reset counter
-      global_sense.store(!local_sense);
+      global_sense.store(!local_sense); // reverse the global counter
     } else {
-      while (global_sense.load() == )
+      // wait while the global thread is the same as my local thread
+      while (global_sense.load() == local_sense) {
+        // std::this_thread::yield();
+      }
     }
   }
 };
