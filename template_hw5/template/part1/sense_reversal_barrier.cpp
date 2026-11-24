@@ -32,7 +32,15 @@ void single_blur(const double *input, double *output, int size, int start, int e
     }
 }
 
-void worker(const double *input, double *output, int size, int start, int end)
+void worker(double *input, double *output, int size, int start, int end, int repeats, int tid) {
+    for (int i = 0; i < repeats; i++) {
+        single_blur(input, output, size, start, end);
+
+        B.barrier(tid);
+
+        std::swap(input, output);
+    }
+}
 
 // Do not change the signature of this function.
 // However, you should create more functions in this file for your computation.
@@ -41,10 +49,20 @@ void repeated_blur(double* input, double* output, int size, int repeats, int num
     B.init(num_threads);
 
     int thread_chunk = (size  + num_threads - 1) / num_threads;
+
     // init vector of threads of size num_threads
     std::vector<std::thread> worker_threads(num_threads);
 
-    for (int i = 0; i < repeats; i++) {
+    for (int i = 0; i < worker_threads.size(); i++) {
+        int start = i * thread_chunk;
+        int end = start + thread_chunk;
+        if (end > size) {
+            end = size;
+        }
+        worker_threads[i] = std::thread(worker, input, output, size, start, end, repeats, i);
+    }
 
+    for (int i = 0; i < worker_threads.size(); i++) {
+        worker_threads[i].join();
     }
 }
